@@ -91,6 +91,14 @@ def clean_financial_data(df):
 # ============================================================================
 # 4. PREDICTION ENDPOINT
 # ============================================================================
+@app.get("/")
+async def root():
+    return {
+        "status": "online",
+        "system": "Quant-Forecasting-Terminal-V2",
+        "version": "1.0.0",
+        "endpoints": ["/predict"]
+    }
 @app.post("/predict")
 async def predict(file: UploadFile = File(...), model_type: str = Form(...)):
     contents = await file.read()
