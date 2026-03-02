@@ -6,6 +6,9 @@ import FileUploader from './components/FileUploader';
 import ModelSelector from './components/ModelSelector';
 import './App.css';
 
+// 🚀 DYNAMIC API URL: Use Vercel Environment Variable or fallback to your Live Render URL
+const API_BASE_URL = import.meta.env.VITE_API_URL || "https://quant-forecasting-terminal-2.onrender.com";
+
 function App() {
   const [file, setFile] = useState(null);
   const [selectedModel, setSelectedModel] = useState('lstm');
@@ -24,19 +27,21 @@ function App() {
     formData.append('model_type', selectedModel);
 
     try {
-      const response = await axios.post('http://localhost:8000/predict', formData);
+      // ✅ Using the dynamic URL instead of hardcoded localhost
+      const response = await axios.post(`${API_BASE_URL}/predict`, formData);
       
       const chartData = response.data.actual.map((val, i) => ({
         index: i,
         Actual: val,
         Predicted: response.data.predicted[i],
-        Trend: response.data.trend ? response.data.trend[i] : null // NEW: Trend line mapped here
+        Trend: response.data.trend ? response.data.trend[i] : null 
       }));
 
       setResults({ ...response.data, chartData });
     } catch (error) {
       console.error("Connection Error:", error);
-      alert("Error: Ensure your Python FastAPI backend is running on port 8000!");
+      // Detailed error message to help you debug during deployment
+      alert(`Connection Failed! \nTarget: ${API_BASE_URL} \n\nEnsure your Render backend is "Live" and not "Sleeping".`);
     } finally {
       setLoading(false);
     }
@@ -109,7 +114,6 @@ function App() {
               <div>{results.rmse}</div>
             </div>
             
-            {/* Dynamic Outlier Badge */}
             {results.outliers && (
               <div className={`outlier-badge ${results.outliers.count > 0 ? 'has-outliers' : 'safe'}`}>
                 <small>MARKET VOLATILITY</small>
@@ -146,7 +150,6 @@ function App() {
                   strokeWidth={2} 
                   dot={false} 
                 />
-                {/* NEW: Smooth Trend Line */}
                 <Line 
                   type="monotone" 
                   dataKey="Trend" 
@@ -166,66 +169,30 @@ function App() {
             </ResponsiveContainer>
           </div>
 
-          <div className="forecast-table-container">
-            <h3>Recent 5-Day Comparison</h3>
-            <table className="forecast-table">
-              <thead>
-                <tr>
-                  <th>Index</th>
-                  <th>Actual (₹)</th>
-                  <th>Predicted (₹)</th>
-                  <th>Diff</th>
-                </tr>
-              </thead>
-              <tbody>
-                {results.chartData.slice(-5).map((row, i) => {
-                  const diff = row.Predicted ? (row.Predicted - row.Actual).toFixed(2) : "N/A";
-                  const isOver = diff > 0;
-                  return (
-                    <tr key={i}>
-                      <td>{row.index}</td>
-                      <td>{row.Actual.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
-                      <td>{row.Predicted ? row.Predicted.toLocaleString(undefined, {minimumFractionDigits: 2}) : '---'}</td>
-                      <td style={{ color: isOver ? '#ef4444' : '#10b981' }}>
-                        {diff !== "N/A" ? (isOver ? `+${diff}` : diff) : '---'}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-
           {/* Correlation Heatmap */}
           {results.correlation && (
             <div className="heatmap-container">
               <h3>Market Features Correlation Heatmap</h3>
-              <p className="heatmap-desc">Shows how strongly different market features move together (1.0 = Perfect positive correlation, -1.0 = Perfect negative correlation).</p>
+              <p className="heatmap-desc">Shows how strongly market features move together (1.0 = perfect, -1.0 = inverse).</p>
               
               <div 
                 className="heatmap-grid" 
                 style={{ gridTemplateColumns: `auto repeat(${results.correlation.columns.length}, 1fr)` }}
               >
-                {/* Top Header Row */}
                 <div className="heatmap-cell header-empty"></div>
                 {results.correlation.columns.map((col) => (
                   <div key={col} className="heatmap-cell header-col">{col}</div>
                 ))}
 
-                {/* Data Rows */}
                 {results.correlation.columns.map((rowCol, i) => (
                   <React.Fragment key={rowCol}>
                     <div className="heatmap-cell header-row">{rowCol}</div>
                     {results.correlation.values[i].map((val, j) => {
-                      // Color logic: Dynamic green for positive, red for negative
                       const alpha = Math.abs(val);
                       const isPositive = val >= 0;
-                      // Darker background for stronger correlation
                       const bgColor = isPositive 
                         ? `rgba(16, 185, 129, ${alpha})` 
                         : `rgba(239, 68, 68, ${alpha})`;
-                      
-                      // White text for dark backgrounds so it's readable
                       const textColor = alpha > 0.5 ? 'white' : '#1e293b';
 
                       return (
@@ -243,7 +210,6 @@ function App() {
               </div>
             </div>
           )}
-          
         </div>
       )}
     </div>
