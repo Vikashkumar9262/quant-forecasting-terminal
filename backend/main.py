@@ -21,7 +21,7 @@ app.add_middleware(
 )
 
 # ============================================================================
-# 1. YOUR CUSTOM AUTOREGRESSION
+# 1. AUTOREGRESSION
 # ============================================================================
 class CustomARModel:
     def __init__(self, order=5):
@@ -51,7 +51,7 @@ class CustomARModel:
         return np.array(predictions)
 
 # ============================================================================
-# 2. YOUR CUSTOM LINEAR REGRESSION (FROM SCRATCH)
+# 2.  LINEAR REGRESSION 
 # ============================================================================
 class LinearRegressionScratch:
     """Linear Regression using Normal Equation: θ = (X'X)⁻¹X'y"""
@@ -71,7 +71,7 @@ class LinearRegressionScratch:
         return np.dot(X, self.weights) + self.bias
 
 # ============================================================================
-# 3. UNIVERSAL DATA CLEANER
+# 3.  DATA CLEANER
 # ============================================================================
 def clean_financial_data(df):
     if 'DATE' in df.columns:
@@ -105,7 +105,7 @@ async def predict(file: UploadFile = File(...), model_type: str = Form(...)):
     df = pd.read_csv(io.BytesIO(contents))
     
     # ------------------------------------------
-    # NEW: CORRELATION HEATMAP LOGIC
+     CORRELATION HEATMAP LOGIC
     # ------------------------------------------
     potential_cols = ['OPEN', 'HIGH', 'LOW', 'CLOSE', 'LTP', 'VWAP', 'VOLUME', 'Premium']
     corr_cols = [c for c in potential_cols if c in df.columns]
